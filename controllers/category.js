@@ -8,7 +8,7 @@ exports.create = async (req, res) => {
         name: name,
       },
     });
-    await res.send(category);
+    res.send(category);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
