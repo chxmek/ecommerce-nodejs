@@ -30,7 +30,15 @@ exports.create = async (req, res) => {
 
 exports.list = async (req, res) => {
   try {
-    const product = await prisma.product.findMany();
+    const { count } = req.params;
+    const product = await prisma.product.findMany({
+      take: parseInt(count), // show response by following count
+      orderBy: { createdAt: "desc" }, // sort by createdAt (the latest comes first)
+      include: {
+        category: true,
+        images: true,
+      },
+    });
     res.send(product);
   } catch (err) {
     console.log(err);
