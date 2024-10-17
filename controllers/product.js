@@ -32,7 +32,7 @@ exports.list = async (req, res) => {
   try {
     const { count } = req.params;
     const product = await prisma.product.findMany({
-      take: parseInt(count), // show response by following count
+      take: parseInt(count), // show response by following count (ex. cout:5 => show: 5 data)
       orderBy: { createdAt: "desc" }, // sort by createdAt (the latest comes first)
       include: {
         category: true,
@@ -48,7 +48,35 @@ exports.list = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    // const product = await prisma.product.findMany();
+    const { title, description, price, quantity, categoryId, images } =
+      req.body;
+    const { id } = req.params;
+    // clear image
+    await prisma.image.deleteMany({
+      where: {
+        productId: Number(id),
+      },
+    });
+    const product = await prisma.product.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        title: title,
+        description: description,
+        price: parseFloat(price),
+        quantity: parseInt(quantity),
+        categoryId: parseInt(categoryId),
+        images: {
+          create: images.map((item) => ({
+            asset_id: item.asset_id,
+            public_id: item.public_id,
+            url: item.url,
+            secure_url: item.secure_url,
+          })),
+        },
+      },
+    });
     res.send(product);
   } catch (err) {
     console.log(err);
@@ -58,7 +86,13 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    res.send("Remove");
+    const { id } = req.params;
+    const product = await prisma.product.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+    res.send("Delete product id: " + id + " success");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
