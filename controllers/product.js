@@ -46,12 +46,31 @@ exports.list = async (req, res) => {
   }
 };
 
+exports.read = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await prisma.product.findFirst({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+    });
+    res.send(product);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.update = async (req, res) => {
   try {
     const { title, description, price, quantity, categoryId, images } =
       req.body;
     const { id } = req.params;
-    // clear image
+    // clear image (ลบ image ใน cloud ก่อน แล้วค่อย insert เข้าไปใหม่)
     await prisma.image.deleteMany({
       where: {
         productId: Number(id),
