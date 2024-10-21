@@ -120,17 +120,97 @@ exports.remove = async (req, res) => {
 
 exports.listBy = async (req, res) => {
   try {
-    res.send("listBy");
+    const { sort, order, limit } = req.body;
+    const products = await prisma.product.findMany({
+      take: limit,
+      // เขียน orderBy: { [sort]: order } สิ่งที่ได้จะเป็น { price: order } แต่ถ้าเขียน orderBy: { sort: order } สิ่งที่ได้จะเป็น { sort: order }
+      orderBy: { [sort]: order }, // asc => น้อยไปมาก, desc => มากไปน้อย
+      include: { category: true },
+    });
+    บบ;
+    res.send(products);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+const handleQuery = async (req, res, query) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        title: {
+          contains: query,
+        },
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+    });
+    res.send(products);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Search error" });
+  }
+};
+
+const handlePrice = async (req, res, priceRange) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        price: {
+          gte: priceRange[0], // more than gte
+          lte: priceRange[1], // and less than lte
+        },
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+    });
+    res.send(products);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Search error" });
+  }
+};
+
+const handleCategory = async (req, res, categoryId) => {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        categoryId: {
+          in: categoryId.map((id) => Number(id)),
+        },
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+    });
+    res.send(products);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Search error" });
+  }
+};
+
 exports.searchFilters = async (req, res) => {
   try {
-    const product = await prisma.product.findMany();
-    res.send(product);
+    const { query, category, price } = req.body;
+    if (query) {
+      console.log("query --> ", query);
+      await handleQuery(req, res, query);
+    }
+    if (category) {
+      console.log("category --> ", category);
+      await handleCategory(req, res, category);
+    }
+    if (price) {
+      console.log("price --> ", price);
+      await handlePrice(req, res, price);
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
